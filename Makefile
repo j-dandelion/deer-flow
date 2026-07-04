@@ -101,12 +101,12 @@ setup-sandbox:
 # Start all services in development mode (with hot-reloading)
 dev:
 	@$(PYTHON) ./scripts/check.py
-	@$(RUN_WITH_GIT_BASH) ./scripts/serve.sh --dev
+	-@$(RUN_WITH_GIT_BASH) ./scripts/serve.sh --dev
 
 # Start all services in production mode (with optimizations)
 start:
 	@$(PYTHON) ./scripts/check.py
-	@$(RUN_WITH_GIT_BASH) ./scripts/serve.sh --prod
+	-@$(RUN_WITH_GIT_BASH) ./scripts/serve.sh --prod
 
 # Start all services in daemon mode (background)
 dev-daemon:

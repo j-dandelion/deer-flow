@@ -1,6 +1,11 @@
 "use client";
 
-import { MonitorSmartphoneIcon, MoonIcon, SunIcon } from "lucide-react";
+import {
+  MonitorSmartphoneIcon,
+  MoonIcon,
+  SnowflakeIcon,
+  SunIcon,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import { useMemo, type ComponentType, type SVGProps } from "react";
 
@@ -26,7 +31,9 @@ const languageOptions: { value: Locale; label: string }[] = [
 export function AppearanceSettingsPage() {
   const { t, locale, changeLocale } = useI18n();
   const { theme, setTheme, systemTheme } = useTheme();
-  const currentTheme = (theme ?? "system") as "system" | "light" | "dark";
+  type ThemeMode = "system" | "light" | "dark" | "iceberg" | "iceberg-light";
+
+  const currentTheme = (theme ?? "system") as ThemeMode;
 
   const themeOptions = useMemo(
     () => [
@@ -48,10 +55,26 @@ export function AppearanceSettingsPage() {
         description: t.settings.appearance.darkDescription,
         icon: MoonIcon,
       },
+      {
+        id: "iceberg",
+        label: t.settings.appearance.iceberg,
+        description: t.settings.appearance.icebergDescription,
+        icon: SnowflakeIcon,
+      },
+      {
+        id: "iceberg-light",
+        label: t.settings.appearance.icebergLight,
+        description: t.settings.appearance.icebergLightDescription,
+        icon: SnowflakeIcon,
+      },
     ],
     [
       t.settings.appearance.dark,
       t.settings.appearance.darkDescription,
+      t.settings.appearance.iceberg,
+      t.settings.appearance.icebergDescription,
+      t.settings.appearance.icebergLight,
+      t.settings.appearance.icebergLightDescription,
       t.settings.appearance.light,
       t.settings.appearance.lightDescription,
       t.settings.appearance.system,
@@ -65,7 +88,7 @@ export function AppearanceSettingsPage() {
         title={t.settings.appearance.themeTitle}
         description={t.settings.appearance.themeDescription}
       >
-        <div className="grid gap-3 lg:grid-cols-3">
+        <div className="grid gap-3 lg:grid-cols-3 xl:grid-cols-5">
           {themeOptions.map((option) => (
             <ThemePreviewCard
               key={option.id}
@@ -73,7 +96,14 @@ export function AppearanceSettingsPage() {
               label={option.label}
               description={option.description}
               active={currentTheme === option.id}
-              mode={option.id as "system" | "light" | "dark"}
+              mode={
+                option.id as
+                  | "system"
+                  | "light"
+                  | "dark"
+                  | "iceberg"
+                  | "iceberg-light"
+              }
               systemTheme={systemTheme}
               onSelect={(value) => setTheme(value)}
             />
@@ -124,12 +154,20 @@ function ThemePreviewCard({
   label: string;
   description: string;
   active: boolean;
-  mode: "system" | "light" | "dark";
+  mode: "system" | "light" | "dark" | "iceberg" | "iceberg-light";
   systemTheme?: string;
-  onSelect: (mode: "system" | "light" | "dark") => void;
+  onSelect: (mode: string) => void;
 }) {
   const previewMode =
-    mode === "system" ? (systemTheme === "dark" ? "dark" : "light") : mode;
+    mode === "system"
+      ? systemTheme === "dark"
+        ? "dark"
+        : "light"
+      : mode === "iceberg"
+        ? "dark"
+        : mode === "iceberg-light"
+          ? "light"
+          : mode;
   return (
     <button
       type="button"

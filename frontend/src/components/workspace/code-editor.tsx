@@ -95,7 +95,11 @@ export function CodeEditor({
             "h-full overflow-auto font-mono [&_.cm-editor]:h-full [&_.cm-focused]:outline-none!",
             "px-2 py-0! [&_.cm-line]:px-2! [&_.cm-line]:py-0!",
           )}
-          theme={resolvedTheme === "dark" ? customDarkTheme : customLightTheme}
+          theme={
+            resolvedTheme === "dark" || resolvedTheme === "iceberg"
+              ? customDarkTheme
+              : customLightTheme
+          }
           extensions={extensions}
           basicSetup={{
             foldGutter:

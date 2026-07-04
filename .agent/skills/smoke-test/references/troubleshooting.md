@@ -272,24 +272,38 @@ Processes exit quickly after running `make dev-daemon`.
 
 ### Issue: Nginx Fails to Start Because Temp Directories Do Not Exist
 
-**Symptoms**:
-```
-nginx: [emerg] mkdir() "/opt/homebrew/var/run/nginx/client_body_temp" failed (2: No such file or directory)
-```
+**Status: RESOLVED in-repo (nginx.local.conf already pins all five temp
+paths; serve.sh passes `-e logs/nginx-error.log` for the bootstrap log).**
 
-**Solutions**:
-Add local temp directory configuration to `docker/nginx/nginx.local.conf` so nginx uses the repository's temp directory.
+Kept here as historical context in case the config regresses.
 
-Add the following at the beginning of the `http` block:
-```nginx
-client_body_temp_path temp/client_body_temp;
-proxy_temp_path temp/proxy_temp;
-fastcgi_temp_path temp/fastcgi_temp;
-uwsgi_temp_path temp/uwsgi_temp;
-scgi_temp_path temp/scgi_temp;
+**Original symptoms** (Fedora/RHEL package builds of nginx):
 ```
+nginx: [alert] could not open error log file: open() "/var/log/nginx/error.log" failed (13: Permission denied)
+nginx: [emerg] mkdir() "/var/lib/nginx/tmp/client_body" failed (13: Permission denied)
+```
+(macOS homebrew reports the same shape but with different paths:
+`/opt/homebrew/var/run/nginx/client_body_temp` and friends.)
 
-Note: The `temp/` directory under the repository root is created automatically by `make dev` or `make dev-daemon`.
+**Two root causes, both fixed:**
+
+1. **Bootstrap error log.** nginx tries to open its compiled-in default
+   error log (`/var/log/nginx/error.log` on Fedora, owned root:root
+   drwx--x--x) BEFORE parsing the config — so the config-level
+   `error_log` directive never gets a chance to redirect. Fix: pass
+   `-e logs/nginx-error.log` on the nginx command line (serve.sh
+   already does this). `-p $REPO_ROOT` does NOT help because the
+   default error-log path is absolute.
+
+2. **Temp directories.** nginx falls back to its compiled-in
+   `/var/lib/nginx/tmp/*` paths (Fedora: owned root:nginx drwxrwx---,
+   unwritable by jared). Fix: add the five `*_temp_path` directives
+   at the top of the `http {}` block in `docker/nginx/nginx.local.conf`
+   (already present). `serve.sh` creates the `temp/` subdirectories
+   at startup.
+
+If you see either error after a clean `make dev`, the config has
+regressed — re-check both directives above are still in place.
 
 ---
 

@@ -468,8 +468,13 @@ run_service "Frontend" \
     3000 120
 
 # 3. Nginx
+# `-e logs/nginx-error.log` overrides the bootstrap error log path (which nginx
+# opens BEFORE parsing the config). Without it, nginx tries the compiled-in
+# /var/log/nginx/error.log and fails with `[alert] Permission denied` as a
+# non-root user. `-p $REPO_ROOT` is prefix-relative only — it does NOT redirect
+# the absolute default error-log path.
 run_service "Nginx" \
-    "nginx -g 'daemon off;' -c '$REPO_ROOT/docker/nginx/nginx.local.conf' -p '$REPO_ROOT' > logs/nginx.log 2>&1" \
+    "nginx -g 'daemon off;' -e '$REPO_ROOT/logs/nginx-error.log' -c '$REPO_ROOT/docker/nginx/nginx.local.conf' -p '$REPO_ROOT' > logs/nginx.log 2>&1" \
     2026 10
 
 # ── Ready ────────────────────────────────────────────────────────────────────

@@ -523,6 +523,12 @@ export const enUS: Translations = {
       systemDescription: "Match the operating system preference automatically.",
       lightDescription: "Bright palette with higher contrast for daytime.",
       darkDescription: "Dim palette that reduces glare for focus.",
+      iceberg: "Iceberg",
+      icebergDescription:
+        "Cool blue-gray palette inspired by the Iceberg terminal theme.",
+      icebergLight: "Iceberg Light",
+      icebergLightDescription:
+        "Light variant of the Iceberg palette for daytime use.",
       languageTitle: "Language",
       languageDescription: "Switch between languages.",
     },

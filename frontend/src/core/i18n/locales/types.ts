@@ -427,9 +427,13 @@ export interface Translations {
       system: string;
       light: string;
       dark: string;
+      iceberg: string;
+      icebergLight: string;
       systemDescription: string;
       lightDescription: string;
       darkDescription: string;
+      icebergDescription: string;
+      icebergLightDescription: string;
       languageTitle: string;
       languageDescription: string;
     };
