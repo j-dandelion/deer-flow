@@ -101,6 +101,27 @@ def _has_tool_call_intent_or_error(message: AIMessage) -> bool:
     return response_metadata.get("finish_reason") in _TOOL_CALL_FINISH_REASONS
 
 
+_FORCED_STOP_PREFIX = "[FORCED STOP]"
+
+
+def _contains_forced_stop(content: object) -> bool:
+    """Return True when *content* carries a LoopDetection hard-stop marker.
+
+    ``LoopDetectionMiddleware._append_text`` stores the marker as either a
+    plain string (``str``) or a list element (``{"type": "text", "text": …}``)
+    depending on the original content type.  This helper covers both formats.
+    """
+    if isinstance(content, str):
+        return content.startswith(_FORCED_STOP_PREFIX)
+    if isinstance(content, list):
+        for block in content:
+            if isinstance(block, dict):
+                text = block.get("text", "")
+                if isinstance(text, str) and text.lstrip("\n").startswith(_FORCED_STOP_PREFIX):
+                    return True
+    return False
+
+
 class TodoMiddleware(TodoListMiddleware):
     """Extends TodoListMiddleware with `write_todos` context-loss detection.
 
@@ -286,6 +307,18 @@ class TodoMiddleware(TodoListMiddleware):
         messages = state.get("messages") or []
         last_ai = next((m for m in reversed(messages) if isinstance(m, AIMessage)), None)
         if not last_ai or _has_tool_call_intent_or_error(last_ai):
+            return None
+
+        # 2b. Do NOT override a LoopDetectionMiddleware hard stop.  When the
+        #     loop-detection guard fires, it strips tool_calls and appends a
+        #     "[FORCED STOP] …" marker to the AIMessage content.  If we
+        #     redirect back to the model here we create a triple-fire loop:
+        #     hard stop → todo jump_to model → model emits tools → hard stop
+        #     → todo jump_to model → … until the reminder cap is exhausted.
+        #     Yielding here lets the hard stop's exit routing take effect.
+        #     Content may be a str or a list (Anthropic thinking blocks, etc.);
+        #     LoopDetectionMiddleware._append_text handles both formats.
+        if _contains_forced_stop(last_ai.content):
             return None
 
         # 3. Allow exit when all todos are completed or there are no todos.
